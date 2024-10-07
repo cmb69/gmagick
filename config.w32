@@ -7,9 +7,20 @@ if (PHP_GMAGICK != "no") {
 			&& CHECK_LIB("CORE_RL_magick_.lib", "gmagick", PHP_PHP_BUILD + "\\lib\\graphicsmagick;" + PHP_GMAGICK)
 			)
 	{
+		if (!GREP_HEADER("magick/version.h", "#define\\s+MagickLibVersionText\\s+\"(\\d+)\.(\\d+)\.(\\d+)\"", PHP_PHP_BUILD + "\\include\\GraphicsMagick")) {
+			ERROR("cannot detect GraphicsMagick version");
+		}
+		var GRAPHICSMAGICK_VERSION_ORIG = RegExp.$1 + "." + RegExp.$2 + "." + RegExp.$3;
+		var GRAPHICSMAGICK_VERSION_MASK = 1000000 * RegExp.$1 + 1000 * RegExp.$2 + 1 * RegExp.$3;
+		if (GRAPHICSMAGICK_VERSION_MASK >= 1001000) {
+			MESSAGE("found version " + GRAPHICSMAGICK_VERSION_ORIG);
+		} else {
+			ERROR("no. You need at least GraphicsMagick version 1.1.0 to use Gmagick.");
+		}
 		ADD_FLAG("CFLAGS_GMAGICK", "/D NDEBUG /D _WINDOWS /D WIN32 /D _VISUALC_ /D NeedFunctionPrototypes /D _DLL /D _MAGICKMOD_ /D _WANDLIB_");
 		EXTENSION('gmagick', 'gmagick_helpers.c gmagick_methods.c gmagick.c gmagickdraw_methods.c gmagickpixel_methods.c');
 		AC_DEFINE('HAVE_GMAGICK', 1);
+		AC_DEFINE('GMAGICK_LIB_MASK', GRAPHICSMAGICK_VERSION_MASK, 'Version mask for comparisons', /*quote*/false);
 	} else {
 		WARNING("gmagick not enabled; libraries and headers not found");
 	}
